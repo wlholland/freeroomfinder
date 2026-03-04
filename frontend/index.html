@@ -22,7 +22,6 @@
     <div class="field-group">
       <label>Buildings</label>
       <div class="building-actions">
-        <button id="btn-select-all">Select All</button>
         <button id="btn-clear">Clear</button>
       </div>
       <input type="text" id="building-search" class="building-search" placeholder="Filter buildings…" autocomplete="off">
@@ -66,7 +65,7 @@
     <div id="error-area"></div>
 
     <div id="results-placeholder" class="placeholder-msg">
-      Select buildings and a time window, then click Find Free Rooms.
+      Select a building and a time window, then click Find Free Rooms.
     </div>
 
     <table id="results-table" style="display:none">
@@ -82,6 +81,28 @@
       <tbody id="results-body"></tbody>
     </table>
   </div>
+
+  <!-- About / Info -->
+  <aside class="card info-panel">
+    <h2>About</h2>
+    <p>FreeRoomFinder shows you which classrooms at BYU are unoccupied during a time window — great for finding a quiet study space or an open room for a group meeting.</p>
+
+    <h3>How to use</h3>
+    <ol>
+      <li>Select a <strong>building</strong> from the list.</li>
+      <li>Choose a <strong>day</strong> and <strong>time range</strong>.</li>
+      <li>Click <strong>Find Free Rooms</strong>.</li>
+    </ol>
+
+    <h3>First-time loading</h3>
+    <p>The first time you search a building, the app fetches its full room schedule from BYU's website and stores it. This can take <strong>30–90 seconds</strong>. A progress bar will appear while it loads. After that, results are instant.</p>
+
+    <h3>Cached data</h3>
+    <p>Schedules are cached on the server and shared — if someone else has already loaded a building, you'll get results immediately. Buildings marked <span class="info-badge-example">cached</span> are ready to go.</p>
+
+    <h3>Room links</h3>
+    <p>Click any room number in the results to view its full schedule on BYU's class scheduling site.</p>
+  </aside>
 </main>
 
 <script src="/static/app.js"></script>

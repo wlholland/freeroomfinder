@@ -76,12 +76,6 @@ function getSelectedBuildings() {
   ).map((cb) => cb.value);
 }
 
-function selectAllBuildings() {
-  document.querySelectorAll("#building-list input[type=checkbox]").forEach(
-    (cb) => (cb.checked = true)
-  );
-}
-
 function clearBuildings() {
   document.querySelectorAll("#building-list input[type=checkbox]").forEach(
     (cb) => (cb.checked = false)
@@ -98,7 +92,6 @@ function filterBuildingList(query) {
 
 // ── Day selector ──────────────────────────────────────────
 function attachEventListeners() {
-  document.getElementById("btn-select-all").addEventListener("click", selectAllBuildings);
   document.getElementById("btn-clear").addEventListener("click", clearBuildings);
   document.getElementById("btn-search").addEventListener("click", handleSearch);
   document.getElementById("btn-theme").addEventListener("click", toggleTheme);

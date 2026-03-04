@@ -62,12 +62,16 @@ header .term-label {
 
 /* ── Layout ──────────────────────────────────── */
 main {
-  max-width: 960px;
+  max-width: 1160px;
   margin: 24px auto;
   padding: 0 16px;
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr 220px;
   gap: 20px;
+}
+@media (max-width: 900px) {
+  main { grid-template-columns: 280px 1fr; }
+  .info-panel { display: none; }
 }
 @media (max-width: 680px) {
   main { grid-template-columns: 1fr; }
@@ -336,3 +340,49 @@ tr.section-divider td {
   vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Info panel ──────────────────────────────── */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-self: start;
+}
+.info-panel h2 {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.info-panel h3 {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.info-panel p, .info-panel ol {
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.info-panel ol {
+  padding-left: 18px;
+}
+.info-panel ol li {
+  margin-bottom: 4px;
+}
+.info-panel strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.info-badge-example {
+  display: inline-block;
+  font-size: .72rem;
+  color: var(--green);
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
