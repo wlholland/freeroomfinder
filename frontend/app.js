@@ -51,7 +51,8 @@ function renderBuildingList(list) {
     label.className = "building-item";
 
     const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
+    checkbox.type = "radio";
+    checkbox.name = "building";
     checkbox.value = b.code;
 
     const nameSpan = document.createElement("span");
@@ -72,12 +73,12 @@ function renderBuildingList(list) {
 
 function getSelectedBuildings() {
   return Array.from(
-    document.querySelectorAll("#building-list input[type=checkbox]:checked")
+    document.querySelectorAll("#building-list input[type=radio]:checked")
   ).map((cb) => cb.value);
 }
 
 function clearBuildings() {
-  document.querySelectorAll("#building-list input[type=checkbox]").forEach(
+  document.querySelectorAll("#building-list input[type=radio]").forEach(
     (cb) => (cb.checked = false)
   );
 }
