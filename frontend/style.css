@@ -1,5 +1,4 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { max-width: 100%; overflow-x: hidden; }
 
 :root {
   --blue:    #002e5d;
@@ -42,6 +41,8 @@ header {
   gap: 16px;
 }
 header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -.3px; }
+.home-link { color: inherit; text-decoration: none; }
+.home-link:hover { opacity: .85; }
 header .term-label {
   font-size: .8rem;
   background: rgba(255,255,255,.15);
@@ -209,7 +210,7 @@ main {
 #btn-search:disabled { background: var(--muted); cursor: not-allowed; }
 
 /* ── Results panel ───────────────────────────── */
-.results { display: flex; flex-direction: column; gap: 16px; }
+.results { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 .results-header {
   display: flex;
@@ -256,9 +257,18 @@ main {
 }
 #results-table {
   width: 100%;
-  min-width: 480px;
+  min-width: 420px;
   border-collapse: collapse;
   font-size: .88rem;
+}
+@media (max-width: 680px) {
+  /* Hide Description and Capacity on mobile — keep Building, Room, Available */
+  #results-table th:nth-child(3),
+  #results-table td:nth-child(3),
+  #results-table th:nth-child(4),
+  #results-table td:nth-child(4) { display: none; }
+  #results-table th, #results-table td { padding: 7px 8px; }
+  #results-table { min-width: 0; font-size: .82rem; }
 }
 #results-table th {
   text-align: left;
