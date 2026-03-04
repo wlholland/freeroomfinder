@@ -7,9 +7,28 @@ let activeDiscovery = {}; // building -> EventSource
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
+  initTheme();
   populateTimeDropdowns();
   attachEventListeners();
   await loadBuildings();
+}
+
+// ── Dark mode ────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem("theme") || "light";
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = document.getElementById("btn-theme");
+  if (btn) btn.innerHTML = theme === "dark" ? "&#9728; Light" : "&#9790; Dark";
+  localStorage.setItem("theme", theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  applyTheme(current === "dark" ? "light" : "dark");
 }
 
 // ── Buildings ────────────────────────────────────────────
@@ -82,6 +101,7 @@ function attachEventListeners() {
   document.getElementById("btn-select-all").addEventListener("click", selectAllBuildings);
   document.getElementById("btn-clear").addEventListener("click", clearBuildings);
   document.getElementById("btn-search").addEventListener("click", handleSearch);
+  document.getElementById("btn-theme").addEventListener("click", toggleTheme);
   document.getElementById("building-search").addEventListener("input", (e) => {
     filterBuildingList(e.target.value);
   });

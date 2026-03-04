@@ -5,7 +5,11 @@ from dataclasses import dataclass, field
 from typing import Optional
 from .config import settings
 
-INVALID_ROOM_MARKER = "Select a Valid room using the room/building navigation."
+_INVALID_ROOM_MARKERS = [
+    "Select a Valid room using the room/building navigation.",
+    "is an invalid room/building.",
+    "There is no schedule for this room",
+]
 
 # Regex for "8:00a - 9:15a" or "1:00p - 2:15p"
 _TIME_RE = re.compile(
@@ -63,7 +67,7 @@ def parse_room_page(building: str, room: str, html: str) -> RoomSchedule:
 
     # Check for invalid room
     body_text = soup.get_text()
-    if INVALID_ROOM_MARKER in body_text:
+    if any(m in body_text for m in _INVALID_ROOM_MARKERS):
         return RoomSchedule(building=building, room_number=room, is_valid=False)
 
     # Extract room metadata — labels are <th> tags, values are adjacent <td> tags
