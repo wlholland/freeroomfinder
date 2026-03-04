@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:y.byu.edu)",
+      "WebFetch(domain:docs.railway.app)",
+      "WebFetch(domain:docs.railway.com)",
+      "WebFetch(domain:byu.edu)",
+      "WebFetch(domain:www.byu.edu)",
+      "WebFetch(domain:aims.byu.edu)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}

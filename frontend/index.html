@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeRoomFinder – BYU</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <h1>FreeRoomFinder</h1>
+  <span class="term-label" id="term-label">BYU</span>
+</header>
+
+<main>
+  <!-- Controls -->
+  <div class="card controls">
+
+    <div class="field-group">
+      <label>Buildings</label>
+      <div class="building-actions">
+        <button id="btn-select-all">Select All</button>
+        <button id="btn-clear">Clear</button>
+      </div>
+      <input type="text" id="building-search" class="building-search" placeholder="Filter buildings…" autocomplete="off">
+      <div id="building-list" class="building-list">
+        <div class="placeholder-msg">Loading…</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Day</label>
+      <div class="day-buttons" id="day-selector">
+        <button class="day-btn" data-day="Monday">Mon</button>
+        <button class="day-btn" data-day="Tuesday">Tue</button>
+        <button class="day-btn" data-day="Wednesday">Wed</button>
+        <button class="day-btn" data-day="Thursday">Thu</button>
+        <button class="day-btn" data-day="Friday">Fri</button>
+        <button class="day-btn" data-day="Saturday">Sat</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Time Range</label>
+      <div class="time-range">
+        <select id="start-time"></select>
+        <span>to</span>
+        <select id="end-time"></select>
+      </div>
+    </div>
+
+    <button id="btn-search">Find Free Rooms</button>
+  </div>
+
+  <!-- Results -->
+  <div class="card results">
+    <div class="results-header">
+      <h2>Results</h2>
+      <span class="results-count" id="results-count" style="display:none"></span>
+    </div>
+
+    <div id="progress-area"></div>
+    <div id="error-area"></div>
+
+    <div id="results-placeholder" class="placeholder-msg">
+      Select buildings and a time window, then click Find Free Rooms.
+    </div>
+
+    <table id="results-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Building</th>
+          <th>Room</th>
+          <th>Description</th>
+          <th>Capacity</th>
+          <th>Available During Window</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
