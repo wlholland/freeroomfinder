@@ -84,6 +84,7 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
+  min-width: 0;
 }
 
 /* ── Controls panel ──────────────────────────── */
@@ -150,7 +151,7 @@ main {
 }
 .building-item:hover { background: var(--bg); }
 .building-item input { cursor: pointer; accent-color: var(--blue-lt); }
-.building-item .b-name { flex: 1; font-size: .88rem; }
+.building-item .b-name { flex: 1; font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .building-item .b-badge {
   font-size: .72rem;
   color: var(--muted);
@@ -261,7 +262,7 @@ main {
   border-collapse: collapse;
   font-size: .88rem;
 }
-@media (max-width: 680px) {
+@media (max-width: 768px) {
   /* Hide Description and Capacity on mobile — keep Building, Room, Available */
   #results-table th:nth-child(3),
   #results-table td:nth-child(3),
