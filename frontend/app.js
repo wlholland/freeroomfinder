@@ -59,10 +59,8 @@ function renderBuildingList(list) {
     nameSpan.textContent = `${b.code} – ${b.display_name}`;
 
     const badge = document.createElement("span");
-    badge.className = b.rooms_cached > 0 ? "b-badge cached" : "b-badge";
-    badge.textContent = b.rooms_cached > 0
-      ? `${b.rooms_cached} rooms`
-      : b.last_crawled ? "0 rooms" : "not cached";
+    badge.className = b.last_crawled ? "b-badge cached" : "b-badge";
+    badge.textContent = b.last_crawled ? "cached" : "not cached";
     badge.id = `badge-${b.code}`;
 
     label.appendChild(checkbox);
