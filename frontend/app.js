@@ -60,7 +60,9 @@ function renderBuildingList(list) {
 
     const badge = document.createElement("span");
     badge.className = b.rooms_cached > 0 ? "b-badge cached" : "b-badge";
-    badge.textContent = b.rooms_cached > 0 ? `${b.rooms_cached} rooms` : "not cached";
+    badge.textContent = b.rooms_cached > 0
+      ? `${b.rooms_cached} rooms`
+      : b.last_crawled ? "0 rooms" : "not cached";
     badge.id = `badge-${b.code}`;
 
     label.appendChild(checkbox);
@@ -185,7 +187,7 @@ async function handleSearch() {
   try {
     // Discover any uncached buildings first, then search
     const uncached = buildings
-      .filter((b) => selectedBuildings.includes(b.code) && b.rooms_cached === 0)
+      .filter((b) => selectedBuildings.includes(b.code) && b.last_crawled === null)
       .map((b) => b.code);
 
     if (uncached.length > 0) {
