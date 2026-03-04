@@ -11,6 +11,7 @@ async function init() {
   populateTimeDropdowns();
   attachEventListeners();
   await loadBuildings();
+  restoreState();
 }
 
 // ── Dark mode ────────────────────────────────────────────
@@ -77,10 +78,17 @@ function getSelectedBuildings() {
   ).map((cb) => cb.value);
 }
 
-function clearBuildings() {
+function resetAll() {
   document.querySelectorAll("#building-list input[type=radio]").forEach(
     (cb) => (cb.checked = false)
   );
+  document.querySelectorAll(".day-btn").forEach((b) => b.classList.remove("active"));
+  selectedDay = null;
+  document.getElementById("start-time").value = "08:00";
+  document.getElementById("end-time").value = "10:00";
+  clearResults();
+  clearError();
+  try { sessionStorage.removeItem("frrf_last"); } catch (e) {}
 }
 
 function filterBuildingList(query) {
@@ -93,7 +101,7 @@ function filterBuildingList(query) {
 
 // ── Day selector ──────────────────────────────────────────
 function attachEventListeners() {
-  document.getElementById("btn-clear").addEventListener("click", clearBuildings);
+  document.getElementById("btn-reset").addEventListener("click", resetAll);
   document.getElementById("btn-search").addEventListener("click", handleSearch);
   document.getElementById("btn-theme").addEventListener("click", toggleTheme);
   document.getElementById("building-search").addEventListener("input", (e) => {
@@ -210,6 +218,7 @@ async function handleSearch() {
 
     const data = await res.json();
     renderResults(data);
+    saveState(selectedBuildings[0], day, startTime, endTime, data);
     await loadBuildings();
   } catch (e) {
     showError("Network error. Is the server running?");
@@ -385,6 +394,37 @@ function updateProgressBar(building, attempted, total, found) {
   const txt = document.getElementById(`prog-text-${building}`);
   if (bar) bar.style.width = `${pct}%`;
   if (txt) txt.textContent = `${pct}% (${found} cached)`;
+}
+
+// ── Session state (survive back-button navigation) ────────
+function saveState(building, day, startTime, endTime, data) {
+  try {
+    sessionStorage.setItem("frrf_last", JSON.stringify({ building, day, startTime, endTime, data }));
+  } catch (e) {}
+}
+
+function restoreState() {
+  try {
+    const raw = sessionStorage.getItem("frrf_last");
+    if (!raw) return;
+    const { building, day, startTime, endTime, data } = JSON.parse(raw);
+
+    const radio = document.querySelector(`#building-list input[value="${building}"]`);
+    if (radio) radio.checked = true;
+
+    if (day) {
+      document.querySelectorAll(".day-btn").forEach((btn) => {
+        if (btn.dataset.day === day) { btn.classList.add("active"); selectedDay = day; }
+      });
+    }
+
+    const startSel = document.getElementById("start-time");
+    const endSel = document.getElementById("end-time");
+    if (startTime) startSel.value = startTime;
+    if (endTime) endSel.value = endTime;
+
+    if (data) renderResults(data);
+  } catch (e) {}
 }
 
 // ── Utilities ─────────────────────────────────────────────
