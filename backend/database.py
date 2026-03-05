@@ -6,6 +6,18 @@ from .config import settings
 DB = settings.db_path
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS term_meta (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Scraped from BYU's academic calendar; refreshed weekly
+CREATE TABLE IF NOT EXISTS semester_schedule (
+    term_code  TEXT PRIMARY KEY,
+    start_date TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS rooms (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     building      TEXT    NOT NULL,
@@ -187,6 +199,85 @@ async def get_discovery_log(building: str) -> Optional[dict]:
         ) as cursor:
             row = await cursor.fetchone()
     return dict(row) if row else None
+
+
+async def get_semester_schedule() -> list[tuple["date", str]]:
+    """Return all cached (start_date, term_code) pairs ordered by start date."""
+    from datetime import date as _date
+    async with aiosqlite.connect(DB) as db:
+        async with db.execute(
+            "SELECT start_date, term_code FROM semester_schedule ORDER BY start_date"
+        ) as cursor:
+            rows = await cursor.fetchall()
+    return [(_date.fromisoformat(r[0]), r[1]) for r in rows]
+
+
+async def save_semester_schedule(entries: list[tuple["date", str]]) -> None:
+    """Persist scraped semester start dates, replacing any existing data."""
+    now = datetime.now(timezone.utc).isoformat()
+    async with aiosqlite.connect(DB) as db:
+        for start_date, term_code in entries:
+            await db.execute(
+                """
+                INSERT INTO semester_schedule (term_code, start_date, fetched_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(term_code) DO UPDATE SET
+                    start_date = excluded.start_date,
+                    fetched_at = excluded.fetched_at
+                """,
+                (term_code, start_date.isoformat(), now),
+            )
+        await db.commit()
+
+
+async def get_schedule_last_fetched() -> "datetime | None":
+    """Return the most recent fetched_at timestamp across all semester_schedule rows."""
+    async with aiosqlite.connect(DB) as db:
+        async with db.execute(
+            "SELECT MAX(fetched_at) FROM semester_schedule"
+        ) as cursor:
+            row = await cursor.fetchone()
+    if row and row[0]:
+        return datetime.fromisoformat(row[0])
+    return None
+
+
+async def get_active_term() -> str | None:
+    """Return the term code that was used to populate the current DB cache."""
+    async with aiosqlite.connect(DB) as db:
+        async with db.execute(
+            "SELECT value FROM term_meta WHERE key = 'active_term'"
+        ) as cursor:
+            row = await cursor.fetchone()
+    return row[0] if row else None
+
+
+async def set_active_term(term: str) -> None:
+    async with aiosqlite.connect(DB) as db:
+        await db.execute(
+            "INSERT INTO term_meta (key, value) VALUES ('active_term', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (term,),
+        )
+        await db.commit()
+
+
+async def wipe_for_new_term(new_term: str) -> None:
+    """Drop all cached schedule data and record the new active term.
+
+    Called automatically when the semester rolls over so users always search
+    the current semester's schedule.
+    """
+    async with aiosqlite.connect(DB) as db:
+        await db.execute("DELETE FROM schedules")
+        await db.execute("DELETE FROM rooms")
+        await db.execute("DELETE FROM discovery_log")
+        await db.execute(
+            "INSERT INTO term_meta (key, value) VALUES ('active_term', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (new_term,),
+        )
+        await db.commit()
 
 
 async def get_cache_stats() -> dict:
