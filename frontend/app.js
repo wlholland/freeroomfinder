@@ -46,6 +46,7 @@ async function loadBuildings() {
 
 function renderBuildingList(list) {
   const container = document.getElementById("building-list");
+  const previouslySelected = getSelectedBuildings();
   container.innerHTML = "";
   list.forEach((b) => {
     const label = document.createElement("label");
@@ -55,6 +56,7 @@ function renderBuildingList(list) {
     checkbox.type = "radio";
     checkbox.name = "building";
     checkbox.value = b.code;
+    if (previouslySelected.includes(b.code)) checkbox.checked = true;
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "b-name";
