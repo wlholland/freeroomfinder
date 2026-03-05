@@ -47,6 +47,7 @@ async function loadBuildings() {
 function renderBuildingList(list) {
   const container = document.getElementById("building-list");
   const previouslySelected = getSelectedBuildings();
+  const prevScroll = container.scrollTop;
   container.innerHTML = "";
   list.forEach((b) => {
     const label = document.createElement("label");
@@ -72,6 +73,8 @@ function renderBuildingList(list) {
     label.appendChild(badge);
     container.appendChild(label);
   });
+  container.scrollTop = prevScroll;
+  updateSelectedBuildingInfo();
 }
 
 function getSelectedBuildings() {
@@ -90,7 +93,24 @@ function resetAll() {
   document.getElementById("end-time").value = "10:00";
   clearResults();
   clearError();
+  updateSelectedBuildingInfo();
   try { sessionStorage.removeItem("frrf_last"); } catch (e) {}
+}
+
+function updateSelectedBuildingInfo() {
+  const el = document.getElementById("selected-building-info");
+  if (!el) return;
+  const selected = getSelectedBuildings();
+  if (selected.length === 0) {
+    el.textContent = "";
+    el.style.display = "none";
+    return;
+  }
+  const code = selected[0];
+  const building = buildings.find((b) => b.code === code);
+  const name = building ? building.display_name : code;
+  el.textContent = `Searching: ${code} – ${name}`;
+  el.style.display = "";
 }
 
 function filterBuildingList(query) {
@@ -109,6 +129,8 @@ function attachEventListeners() {
   document.getElementById("building-search").addEventListener("input", (e) => {
     filterBuildingList(e.target.value);
   });
+
+  document.getElementById("building-list").addEventListener("change", updateSelectedBuildingInfo);
 
   document.querySelectorAll(".day-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -426,6 +448,7 @@ function restoreState() {
     if (endTime) endSel.value = endTime;
 
     if (data) renderResults(data);
+    updateSelectedBuildingInfo();
   } catch (e) {}
 }
 

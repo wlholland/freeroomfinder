@@ -64,15 +64,15 @@ header .term-label {
 
 /* ── Layout ──────────────────────────────────── */
 main {
-  max-width: 1160px;
+  max-width: 1260px;
   margin: 24px auto;
   padding: 0 16px;
   display: grid;
-  grid-template-columns: 280px 1fr 220px;
+  grid-template-columns: 340px 1fr 220px;
   gap: 20px;
 }
-@media (max-width: 900px) {
-  main { grid-template-columns: 280px 1fr; }
+@media (max-width: 960px) {
+  main { grid-template-columns: 300px 1fr; }
   .info-panel { display: none; }
 }
 @media (max-width: 680px) {
@@ -131,7 +131,7 @@ main {
 }
 
 .building-list {
-  max-height: 240px;
+  max-height: 420px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -139,6 +139,9 @@ main {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+@media (max-width: 680px) {
+  .building-list { max-height: 240px; }
 }
 .building-item {
   display: flex;
@@ -193,6 +196,24 @@ main {
   cursor: pointer;
 }
 .time-range span { color: var(--muted); font-size: .85rem; }
+
+/* Selected building indicator */
+.selected-building-info {
+  font-size: .82rem;
+  color: var(--blue-lt);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  text-align: center;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-theme="dark"] .selected-building-info {
+  background: rgba(255,255,255,.04);
+}
 
 /* Search button */
 #btn-search {
