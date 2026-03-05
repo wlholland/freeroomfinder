@@ -2,6 +2,8 @@
 let buildings = [];
 let selectedDay = null;
 let activeDiscovery = {}; // building -> EventSource
+let rightNowActive = false;
+let rightNowHours = 2;
 
 // ── Init ────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", init);
@@ -10,6 +12,10 @@ async function init() {
   initTheme();
   populateTimeDropdowns();
   attachEventListeners();
+  // Mark the default hour selection
+  document.querySelectorAll(".hour-btn").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.hours) === rightNowHours);
+  });
   await loadBuildings();
   restoreState();
 }
@@ -94,6 +100,11 @@ function resetAll() {
   clearResults();
   clearError();
   updateSelectedBuildingInfo();
+  setRightNowActive(false);
+  rightNowHours = 2;
+  document.querySelectorAll(".hour-btn").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.hours) === 2);
+  });
   try { sessionStorage.removeItem("frrf_last"); } catch (e) {}
 }
 
@@ -131,6 +142,16 @@ function attachEventListeners() {
   });
 
   document.getElementById("building-list").addEventListener("change", updateSelectedBuildingInfo);
+
+  document.getElementById("btn-right-now").addEventListener("click", () => {
+    setRightNowActive(!rightNowActive);
+  });
+
+  document.querySelectorAll(".hour-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setRightNowHours(parseInt(btn.dataset.hours));
+    });
+  });
 
   document.querySelectorAll(".day-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -179,6 +200,42 @@ function formatTimeLabel(h, m) {
 
 function formatTimeValue(h, m) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+// ── Right Now ─────────────────────────────────────────────
+function getRightNowStart() {
+  const now = new Date();
+  const h = Math.max(7, Math.min(21, now.getHours()));
+  const m = now.getMinutes() >= 30 ? 30 : 0;
+  return formatTimeValue(h, m);
+}
+
+function applyRightNow() {
+  const startVal = getRightNowStart();
+  const [sh, sm] = startVal.split(":").map(Number);
+  const endH = Math.min(22, sh + rightNowHours);
+  document.getElementById("start-time").value = startVal;
+  document.getElementById("end-time").value = formatTimeValue(endH, sm);
+}
+
+function setRightNowActive(active) {
+  rightNowActive = active;
+  const btn = document.getElementById("btn-right-now");
+  const startSel = document.getElementById("start-time");
+  const endSel = document.getElementById("end-time");
+  btn.classList.toggle("active", active);
+  startSel.disabled = active;
+  endSel.disabled = active;
+  if (active) applyRightNow();
+}
+
+function setRightNowHours(hours) {
+  rightNowHours = hours;
+  document.querySelectorAll(".hour-btn").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.hours) === hours);
+  });
+  if (!rightNowActive) setRightNowActive(true);
+  else applyRightNow();
 }
 
 // ── Search ────────────────────────────────────────────────

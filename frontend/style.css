@@ -215,6 +215,58 @@ main {
   background: rgba(255,255,255,.04);
 }
 
+/* Right Now row */
+.right-now-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.right-now-btn {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: .15s;
+  white-space: nowrap;
+}
+.right-now-btn:hover { border-color: var(--blue-lt); color: var(--blue-lt); }
+.right-now-btn.active {
+  background: var(--blue-lt);
+  border-color: var(--blue-lt);
+  color: #fff;
+}
+.hour-selector {
+  display: flex;
+  gap: 5px;
+}
+.hour-btn {
+  padding: 5px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: .15s;
+}
+.hour-btn:hover { border-color: var(--blue-lt); color: var(--blue-lt); }
+.hour-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.time-range select:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 /* Search button */
 #btn-search {
   width: 100%;
