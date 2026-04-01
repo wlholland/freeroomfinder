@@ -4,6 +4,21 @@ let selectedDay = null;
 let activeDiscovery = {}; // building -> EventSource
 let rightNowActive = false;
 let rightNowHours = 2;
+let lastResultData = null;
+let studySpacesOnly = false;
+
+// Keywords that identify rooms likely useful as study/meeting spaces
+const STUDY_KEYWORDS = [
+  "class", "lecture", "seminar", "conf", "study", "lab",
+  "lounge", "auditorium", "instruction", "tutorial", "testing",
+  "training", "presentation", "reading", "writing",
+];
+
+function isStudySpace(room) {
+  if (!room.description) return false;
+  const d = room.description.toLowerCase();
+  return STUDY_KEYWORDS.some((k) => d.includes(k));
+}
 
 // ── Init ────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", init);
@@ -135,6 +150,10 @@ function filterBuildingList(query) {
 // ── Day selector ──────────────────────────────────────────
 function attachEventListeners() {
   document.getElementById("btn-reset").addEventListener("click", resetAll);
+  document.getElementById("btn-study-filter").addEventListener("click", toggleStudyFilter);
+  document.getElementById("results-search").addEventListener("input", (e) => {
+    filterResults(e.target.value);
+  });
   document.getElementById("btn-search").addEventListener("click", handleSearch);
   document.getElementById("btn-search-all").addEventListener("click", handleSearchAll);
   document.getElementById("btn-cache-all").addEventListener("click", handleCacheAll);
@@ -459,16 +478,58 @@ async function handleCacheAll() {
   btn.textContent = "Cache All Buildings";
 }
 
+function filterResults(query) {
+  const q = query.trim().toLowerCase();
+  const rows = document.querySelectorAll("#results-body tr:not(.section-divider)");
+  rows.forEach((tr) => {
+    const text = [0, 1, 2].map((i) => tr.cells[i]?.textContent || "").join(" ").toLowerCase();
+    tr.style.display = !q || text.includes(q) ? "" : "none";
+  });
+  // Keep the section divider visible only when there are visible rows on both sides
+  const divider = document.querySelector("#results-body .section-divider");
+  if (divider) {
+    const allRows = [...document.querySelectorAll("#results-body tr:not(.section-divider)")];
+    const divIdx = [...divider.parentElement.children].indexOf(divider);
+    const visibleBefore = allRows.filter((tr) => [...tr.parentElement.children].indexOf(tr) < divIdx && tr.style.display !== "none").length;
+    const visibleAfter  = allRows.filter((tr) => [...tr.parentElement.children].indexOf(tr) > divIdx && tr.style.display !== "none").length;
+    divider.style.display = visibleBefore > 0 && visibleAfter > 0 ? "" : "none";
+  }
+}
+
+function toggleStudyFilter() {
+  studySpacesOnly = !studySpacesOnly;
+  const btn = document.getElementById("btn-study-filter");
+  btn.classList.toggle("active", studySpacesOnly);
+  if (lastResultData) renderResults(lastResultData);
+}
+
 function renderResults(data) {
+  lastResultData = data;
+
   const placeholder = document.getElementById("results-placeholder");
   const table = document.getElementById("results-table");
   const tbody = document.getElementById("results-body");
   const countBadge = document.getElementById("results-count");
+  const filterBtn = document.getElementById("btn-study-filter");
 
   tbody.innerHTML = "";
 
   if (!data.rooms || data.rooms.length === 0) {
     placeholder.textContent = `No rooms with any free time found on ${data.day} from ${fmtTime(data.start_time)} to ${fmtTime(data.end_time)}. Try different buildings or a wider time window.`;
+    placeholder.style.display = "";
+    table.style.display = "none";
+    countBadge.style.display = "none";
+    filterBtn.style.display = "none";
+    return;
+  }
+
+  filterBtn.style.display = "";
+  document.getElementById("results-search-wrap").style.display = "";
+
+  const rooms = studySpacesOnly ? data.rooms.filter(isStudySpace) : data.rooms;
+
+  if (rooms.length === 0) {
+    placeholder.textContent = "No study spaces matched. Try turning off the filter.";
     placeholder.style.display = "";
     table.style.display = "none";
     countBadge.style.display = "none";
@@ -478,14 +539,15 @@ function renderResults(data) {
   placeholder.style.display = "none";
   table.style.display = "";
 
-  const fullyFree = data.rooms.filter((r) => r.is_fully_free);
-  const partial   = data.rooms.filter((r) => !r.is_fully_free);
-  countBadge.textContent = `${fullyFree.length} fully free · ${partial.length} partial`;
+  const fullyFree = rooms.filter((r) => r.is_fully_free);
+  const partial   = rooms.filter((r) => !r.is_fully_free);
+  const filterNote = studySpacesOnly ? ` · ${data.rooms.length - rooms.length} hidden` : "";
+  countBadge.textContent = `${fullyFree.length} fully free · ${partial.length} partial${filterNote}`;
   countBadge.style.display = "";
 
   let lastWasFull = true;
 
-  data.rooms.forEach((room, i) => {
+  rooms.forEach((room, i) => {
     // Insert a divider between fully-free and partial sections
     if (lastWasFull && !room.is_fully_free && i > 0) {
       const divRow = document.createElement("tr");
@@ -510,6 +572,10 @@ function renderResults(data) {
     `;
     tbody.appendChild(tr);
   });
+
+  // Re-apply any active text filter (e.g. after study-spaces toggle re-renders)
+  const activeQuery = document.getElementById("results-search").value;
+  if (activeQuery) filterResults(activeQuery);
 }
 
 function renderAvailability(room) {
@@ -683,6 +749,9 @@ function clearResults() {
   document.getElementById("results-placeholder").style.display = "";
   document.getElementById("results-table").style.display = "none";
   document.getElementById("results-count").style.display = "none";
+  document.getElementById("btn-study-filter").style.display = "none";
+  document.getElementById("results-search-wrap").style.display = "none";
+  document.getElementById("results-search").value = "";
   document.getElementById("progress-area").innerHTML = "";
   document.getElementById("results-body").innerHTML = "";
 }

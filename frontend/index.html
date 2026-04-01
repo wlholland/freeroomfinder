@@ -71,6 +71,7 @@
     <div class="results-header">
       <h2>Results</h2>
       <span class="results-count" id="results-count" style="display:none"></span>
+      <button id="btn-study-filter" type="button" class="filter-btn" style="display:none">Study spaces</button>
     </div>
 
     <div id="progress-area"></div>
@@ -78,6 +79,11 @@
 
     <div id="results-placeholder" class="placeholder-msg">
       Select a building and a time window, then click Find Free Rooms.
+    </div>
+
+    <div id="results-search-wrap" style="display:none">
+      <input type="text" id="results-search" class="results-search-input"
+             placeholder="Filter results…" autocomplete="off">
     </div>
 
     <div class="table-scroll">
