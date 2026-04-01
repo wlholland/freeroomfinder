@@ -55,7 +55,11 @@ def parse_day_codes(raw: str) -> list[str]:
     return days
 
 
+_WEEKDAYS = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
+
 def day_matches(raw_days: str, target_day: str) -> bool:
+    if raw_days.strip().lower() == "daily":
+        return target_day in _WEEKDAYS
     return target_day in parse_day_codes(raw_days)
 
 
