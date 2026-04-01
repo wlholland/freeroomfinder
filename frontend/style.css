@@ -283,6 +283,53 @@ main {
 #btn-search:hover { background: var(--blue-lt); }
 #btn-search:disabled { background: var(--muted); cursor: not-allowed; }
 
+/* Search All Buildings button */
+#btn-search-all {
+  width: 100%;
+  padding: 10px;
+  background: var(--card);
+  color: var(--blue-lt);
+  border: 2px solid var(--blue-lt);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .15s;
+  margin-top: 8px;
+}
+#btn-search-all:hover { background: var(--blue-lt); color: #fff; }
+#btn-search-all:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Cache All Buildings button (in building-actions row) */
+#btn-cache-all {
+  font-size: .78rem;
+  padding: 3px 10px;
+  border: 1px solid var(--blue-lt);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--blue-lt);
+  font-weight: 500;
+  cursor: pointer;
+  transition: .15s;
+}
+#btn-cache-all:hover { background: var(--blue-lt); color: #fff; }
+#btn-cache-all:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Success message */
+.success-msg {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: .88rem;
+}
+[data-theme="dark"] .success-msg {
+  background: rgba(74, 222, 128, .1);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, .3);
+}
+
 /* ── Results panel ───────────────────────────── */
 .results { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 

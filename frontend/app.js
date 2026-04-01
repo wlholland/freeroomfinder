@@ -136,6 +136,8 @@ function filterBuildingList(query) {
 function attachEventListeners() {
   document.getElementById("btn-reset").addEventListener("click", resetAll);
   document.getElementById("btn-search").addEventListener("click", handleSearch);
+  document.getElementById("btn-search-all").addEventListener("click", handleSearchAll);
+  document.getElementById("btn-cache-all").addEventListener("click", handleCacheAll);
   document.getElementById("btn-theme").addEventListener("click", toggleTheme);
   document.getElementById("building-search").addEventListener("input", (e) => {
     filterBuildingList(e.target.value);
@@ -238,6 +240,14 @@ function setRightNowHours(hours) {
   else applyRightNow();
 }
 
+// ── Utilities (action buttons) ───────────────────────────
+function setActionButtonsDisabled(disabled) {
+  ["btn-search", "btn-search-all", "btn-cache-all"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disabled;
+  });
+}
+
 // ── Search ────────────────────────────────────────────────
 async function handleSearch() {
   clearResults();
@@ -262,7 +272,7 @@ async function handleSearch() {
   }
 
   const btn = document.getElementById("btn-search");
-  btn.disabled = true;
+  setActionButtonsDisabled(true);
   btn.innerHTML = '<span class="spinner"></span> Searching…';
 
   try {
@@ -304,9 +314,136 @@ async function handleSearch() {
   } catch (e) {
     showError("Network error. Is the server running?");
   } finally {
-    btn.disabled = false;
+    setActionButtonsDisabled(false);
     btn.textContent = "Find Free Rooms";
   }
+}
+
+async function handleSearchAll() {
+  clearResults();
+  clearError();
+
+  const day = getSelectedDay();
+  const startTime = document.getElementById("start-time").value;
+  const endTime = document.getElementById("end-time").value;
+
+  if (!day) {
+    showError("Please select a day.");
+    return;
+  }
+  if (startTime >= endTime) {
+    showError("End time must be after start time.");
+    return;
+  }
+
+  const cachedBuildings = buildings.filter((b) => b.last_crawled !== null).map((b) => b.code);
+  if (cachedBuildings.length === 0) {
+    showError("No buildings are cached yet. Use 'Cache All Buildings' first, or search a specific building to cache it.");
+    return;
+  }
+
+  const btn = document.getElementById("btn-search-all");
+  setActionButtonsDisabled(true);
+  btn.innerHTML = '<span class="spinner"></span> Searching…';
+
+  try {
+    const res = await fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        buildings: cachedBuildings,
+        day,
+        start_time: startTime,
+        end_time: endTime,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showError(err.detail || "Search failed.");
+      return;
+    }
+
+    const data = await res.json();
+    renderResults(data);
+    saveState("__all__", day, startTime, endTime, data);
+  } catch (e) {
+    showError("Network error. Is the server running?");
+  } finally {
+    setActionButtonsDisabled(false);
+    btn.textContent = "Search All Buildings";
+  }
+}
+
+async function handleCacheAll() {
+  const uncached = buildings.filter((b) => b.last_crawled === null).map((b) => b.code);
+  if (uncached.length === 0) {
+    showError("All buildings are already cached.");
+    return;
+  }
+
+  const btn = document.getElementById("btn-cache-all");
+  setActionButtonsDisabled(true);
+  btn.innerHTML = '<span class="spinner"></span> Caching…';
+
+  const area = document.getElementById("progress-area");
+  area.innerHTML = `
+    <div class="progress-wrap" id="cache-all-summary">
+      <div class="progress-label">
+        <span>Caching all buildings…</span>
+        <span id="cache-all-text">0 / ${uncached.length}</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="cache-all-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="cache-all-detail"></div>
+  `;
+
+  const BATCH_SIZE = 5;
+  let done = 0;
+
+  for (let i = 0; i < uncached.length; i += BATCH_SIZE) {
+    const batch = uncached.slice(i, i + BATCH_SIZE);
+
+    // Render progress bars for this batch
+    const detail = document.getElementById("cache-all-detail");
+    if (detail) {
+      detail.innerHTML = "";
+      batch.forEach((code) => {
+        const wrap = document.createElement("div");
+        wrap.className = "progress-wrap";
+        wrap.id = `progress-${code}`;
+        wrap.innerHTML = `
+          <div class="progress-label">
+            <span>${code} – discovering rooms…</span>
+            <span id="prog-text-${code}">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="prog-bar-${code}" style="width:0%"></div>
+          </div>
+        `;
+        detail.appendChild(wrap);
+      });
+    }
+
+    await discoverBuildings(batch);
+    done += batch.length;
+
+    const pct = Math.round((done / uncached.length) * 100);
+    const summaryBar = document.getElementById("cache-all-bar");
+    const summaryText = document.getElementById("cache-all-text");
+    if (summaryBar) summaryBar.style.width = `${pct}%`;
+    if (summaryText) summaryText.textContent = `${done} / ${uncached.length}`;
+  }
+
+  await loadBuildings();
+
+  area.innerHTML = `<div class="success-msg">All ${uncached.length} buildings cached successfully!</div>`;
+  setTimeout(() => { area.innerHTML = ""; }, 4000);
+
+  setActionButtonsDisabled(false);
+  btn.textContent = "Cache All Buildings";
 }
 
 function renderResults(data) {
