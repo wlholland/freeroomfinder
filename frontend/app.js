@@ -668,8 +668,9 @@ function fmtTime(hhmm) {
 }
 
 function showError(msg) {
-  document.getElementById("error-area").innerHTML =
-    `<div class="error-msg">${msg}</div>`;
+  const el = document.getElementById("error-area");
+  el.innerHTML = `<div class="error-msg">${msg}</div>`;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function clearError() {
