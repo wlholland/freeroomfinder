@@ -248,6 +248,17 @@ function setActionButtonsDisabled(disabled) {
   });
 }
 
+function markBuildingCached(code) {
+  const badge = document.getElementById(`badge-${code}`);
+  if (badge) {
+    badge.className = "b-badge cached";
+    badge.textContent = "cached";
+  }
+  // Keep in-memory state in sync so handleSearchAll picks up this building
+  const b = buildings.find((x) => x.code === code);
+  if (b) b.last_crawled = new Date().toISOString();
+}
+
 // ── Search ────────────────────────────────────────────────
 async function handleSearch() {
   clearResults();
@@ -429,12 +440,14 @@ async function handleCacheAll() {
 
     await discoverBuildings(batch);
     done += batch.length;
+    batch.forEach(markBuildingCached);
 
     const pct = Math.round((done / uncached.length) * 100);
     const summaryBar = document.getElementById("cache-all-bar");
     const summaryText = document.getElementById("cache-all-text");
     if (summaryBar) summaryBar.style.width = `${pct}%`;
     if (summaryText) summaryText.textContent = `${done} / ${uncached.length}`;
+    btn.innerHTML = `<span class="spinner"></span> Caching… ${done} / ${uncached.length}`;
   }
 
   await loadBuildings();
