@@ -1,9 +1,14 @@
 import asyncio
-import httpx
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 from .config import settings
-from .scraper import fetch_room_schedule
+from .scraper import (
+    create_client,
+    fetch_sections,
+    get_session_id,
+    search_course_ids,
+    slots_for_building,
+)
 from .database import (
     upsert_room,
     bulk_upsert_schedules,
@@ -57,25 +62,11 @@ def parse_day_codes(raw: str) -> list[str]:
 
 _WEEKDAYS = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
 
+
 def day_matches(raw_days: str, target_day: str) -> bool:
     if raw_days.strip().lower() == "daily":
         return target_day in _WEEKDAYS
     return target_day in parse_day_codes(raw_days)
-
-
-def _room_candidates(start: int, end: int) -> list[str]:
-    """
-    Generate deduplicated room number strings to try.
-    Includes both bare integers ("1") and zero-padded ("001").
-    """
-    seen: set[str] = set()
-    result: list[str] = []
-    for n in range(start, end + 1):
-        for fmt in (str(n), f"{n:03d}"):
-            if fmt not in seen:
-                seen.add(fmt)
-                result.append(fmt)
-    return result
 
 
 async def discover_with_progress(
@@ -83,46 +74,60 @@ async def discover_with_progress(
     year_term: str,
 ) -> AsyncGenerator[tuple[int, int, int], None]:
     """
-    Async generator that probes all room candidates for a building.
-    Yields (attempted, total, found) after each probe completes.
-    Writes valid rooms and their schedules to the DB.
+    Course-driven discovery for a building via BYU's public class-search API.
+
+    1. Search all courses with ≥1 section in *building*.
+    2. Fetch each course's sections concurrently and keep only the meeting
+       times physically in *building*.
+    3. Write each distinct room + its schedule slots to the DB.
+
+    Yields (attempted, total, found) after each course completes, where
+    *total* is the number of courses to inspect and *found* is the number of
+    distinct rooms discovered so far.
     """
     log_id = await log_discovery_start(building, year_term)
-    candidates = _room_candidates(settings.room_range_start, settings.room_range_end)
-    total = len(candidates)
-    found = 0
     attempted = 0
+    found = 0
+    seen_rooms: set[str] = set()
     sem = asyncio.Semaphore(settings.discovery_semaphore)
 
-    async def probe(client: httpx.AsyncClient, room: str):
-        async with sem:
-            await asyncio.sleep(settings.crawl_delay)
-            try:
-                return await fetch_room_schedule(client, building, room, year_term)
-            except Exception:
-                return None
+    async with create_client() as client:
+        try:
+            session_id = await get_session_id(client)
+        except Exception:
+            await log_discovery_finish(log_id, 0, status="error")
+            return
+        course_ids = await search_course_ids(client, session_id, building, year_term)
+        total = len(course_ids)
+        if total == 0:
+            await log_discovery_finish(log_id, 0)
+            return
 
-    async with httpx.AsyncClient() as client:
-        tasks = [asyncio.create_task(probe(client, r)) for r in candidates]
+        async def probe(course_id: str):
+            async with sem:
+                await asyncio.sleep(settings.crawl_delay)
+                try:
+                    sections = await fetch_sections(
+                        client, session_id, course_id, year_term
+                    )
+                    return course_id, slots_for_building(sections, building)
+                except Exception:
+                    return course_id, None
+
+        tasks = [asyncio.create_task(probe(cid)) for cid in course_ids]
         for coro in asyncio.as_completed(tasks):
-            result = await coro
+            _, grouped = await coro
             attempted += 1
-            if result and result.is_valid:
-                found += 1
+            if grouped:
                 now = datetime.now(timezone.utc).isoformat()
-                await upsert_room(
-                    building,
-                    result.room_number,
-                    result.description,
-                    result.capacity,
-                    now,
-                )
-                await bulk_upsert_schedules(
-                    building,
-                    result.room_number,
-                    year_term,
-                    result.slots,
-                )
+                for (bld, room), slots in grouped.items():
+                    # The public API exposes no room capacity/description, so
+                    # those stay NULL (frontend renders "—" for them).
+                    await upsert_room(bld, room, None, None, now)
+                    await bulk_upsert_schedules(bld, room, year_term, slots)
+                    if room not in seen_rooms:
+                        seen_rooms.add(room)
+                        found += 1
             yield attempted, total, found
 
     await log_discovery_finish(log_id, found)

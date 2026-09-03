@@ -15,7 +15,10 @@ const STUDY_KEYWORDS = [
 ];
 
 function isStudySpace(room) {
-  if (!room.description) return false;
+  // The current data source (BYU's public class search) exposes no room
+  // descriptions, so rooms without one are treated as potential study spaces
+  // rather than being hidden by the filter.
+  if (!room.description) return true;
   const d = room.description.toLowerCase();
   return STUDY_KEYWORDS.some((k) => d.includes(k));
 }
@@ -596,22 +599,9 @@ function fmtDuration(mins) {
 }
 
 function openBYURoom(building, room) {
-  // BYU's site uses a POST form, so we open the page and let the user navigate
-  const url = `https://y.byu.edu/class_schedule/cgi/classRoom.cgi`;
-  // Open a helper that uses a form POST via a new tab
-  const win = window.open("", "_blank");
-  win.document.write(`
-    <html><body>
-    <form id="f" method="POST" action="${url}">
-      <input name="year_term" value="20261">
-      <input name="building" value="${building}">
-      <input name="room" value="${room}">
-      <input name="tab_option" value="Schedule">
-    </form>
-    <script>document.getElementById('f').submit();<\/script>
-    </body></html>
-  `);
-  win.document.close();
+  // BYU retired the old y.byu.edu room-schedule CGI (now HTTP 404), so room
+  // links open BYU's public class search where the schedule can be looked up.
+  window.open("https://commtech.byu.edu/noauth/classSchedule/", "_blank");
 }
 
 // ── Discovery Progress (SSE) ──────────────────────────────

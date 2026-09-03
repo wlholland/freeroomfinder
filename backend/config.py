@@ -90,7 +90,9 @@ class Settings:
     crawl_delay: float = field(default_factory=lambda: float(os.getenv("CRAWL_DELAY", "0.5")))
     room_range_start: int = 1
     room_range_end: int = 499
-    byu_url: str = "https://y.byu.edu/class_schedule/cgi/classRoom.cgi"
+    # Public class-search backend (no auth). The legacy
+    # y.byu.edu/class_schedule CGI was decommissioned (HTTP 404 as of ~Aug 2026).
+    byu_url: str = "https://commtech.byu.edu/noauth/classSchedule"
     request_timeout: float = 15.0
 
 

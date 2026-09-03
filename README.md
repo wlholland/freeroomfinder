@@ -77,9 +77,9 @@ Open [http://localhost:8080](http://localhost:8080).
 
 ## How the cache works
 
-BYU's scheduling site doesn't expose a public API, so room schedules are scraped on demand and stored in SQLite.
+BYU's public class schedule doesn't expose a room-based API, so room schedules are collected on demand (courses using a building are searched, then their meeting times are grouped by room) and stored in SQLite.
 
-- **First search of a building:** triggers a full crawl (rooms 1–499 in both alpha and numeric formats). Takes 30–90 seconds. A live progress bar is shown.
+- **First search of a building:** triggers a full crawl of every course scheduled in that building. Takes a few seconds. A live progress bar is shown.
 - **Subsequent searches:** instant — data is served from the local DB cache.
 - **Cache is shared:** if one user crawls a building, everyone benefits immediately.
 
