@@ -30,8 +30,8 @@ Heads-up: these are walk-in study spaces inferred from the class schedule (no cl
 
 ## Troubleshooting
 - **"Couldn't connect" / 404**: make sure the URL ends in `/mcp` with no trailing spaces. Retry in a new chat.
-- **No results**: the building may not be cached yet, or it's Sunday (no class data). Try another building or day.
-- **Stale times**: every answer includes `as_of` — data refreshes from BYU on a ~5-minute cache.
+- **No results**: the building may not be cached yet — Claude can only see buildings someone has already searched on the website. Open https://freeroomfinder-production.up.railway.app, search that building once, then ask again. Sundays also return nothing (no class data).
+- **Stale times**: every answer includes `as_of`. Class schedules are cached for the whole semester (refreshed when a new semester starts); answers themselves are cached ~5 minutes.
 - **Still stuck**: open `https://freeroomfinder-production.up.railway.app/api/v1/docs` in a browser — if that loads, the server is up and it's a connector setting on your account.
 
 ## Alternatives (optional)
