@@ -162,6 +162,21 @@ app.mount("/mcp", get_mcp_app())
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 
+@app.middleware("http")
+async def revalidate_frontend(request, call_next):
+    """Make browsers re-check pages and static assets on every load.
+
+    Without a Cache-Control header browsers cache these heuristically, so a
+    deploy could pair new HTML with a stale style.css.  ETags keep the
+    re-check cheap (304 when unchanged).
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if path in ("/", "/ai") or path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/", response_class=FileResponse)
 async def serve_index():
     return FileResponse("frontend/index.html")
