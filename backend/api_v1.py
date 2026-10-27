@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from datetime import timedelta
 from typing import Optional
+from urllib.parse import parse_qs, unquote
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -57,14 +58,35 @@ def _err(e: AvailabilityError) -> HTTPException:
 async def rooms_available(
     request: Request,
     date: Optional[str] = Query(default=None, description="YYYY-MM-DD, default today (America/Denver)"),
-    start: str = Query(..., description="HH:MM 24-hour (required)"),
-    duration: int = Query(default=60, ge=15, le=960, description="Minutes"),
-    group_size: Optional[int] = Query(default=None, ge=1),
+    start: Optional[str] = Query(default=None, description="HH:MM 24-hour (required)"),
+    duration: Optional[str] = Query(default="60", description="Minutes, 15-960"),
+    group_size: Optional[str] = Query(default=None),
     building: Optional[str] = Query(default=None),
     amenities: Optional[str] = Query(default=None, description="Comma-separated; any value matches nothing (no amenity data)"),
 ):
     _check_rate(request)
-    return await _available(date, start, duration, group_size, building, amenities)
+    params = {
+        "date": date, "start": start, "duration": duration,
+        "group_size": group_size, "building": building, "amenities": amenities,
+    }
+    if start is None or any(v and "&" in v for v in params.values()):
+        params = _repair_query(request.url.query, params)
+    return await _available(**params)
+
+
+def _repair_query(raw_query: str, params: dict) -> dict:
+    """Recover params from a query whose ``&`` separators were mangled.
+
+    Browsing assistants (ChatGPT, seen in practice) sometimes send
+    ``?date=2026-10-28%26start=14:00%26duration=120``, which decodes to a
+    single ``date`` value containing every other param, or HTML-escape the
+    separators as ``&amp;`` (params arrive as ``amp;start``).  Decoding the
+    whole query string, unescaping ``&amp;`` and re-parsing restores them.
+    Only called when ``start`` is missing or a value contains ``&``, which
+    no legitimate value does.
+    """
+    repaired = parse_qs(unquote(raw_query).replace("&amp;", "&"))
+    return {k: (repaired[k][0] if k in repaired else v) for k, v in params.items()}
 
 
 async def _available(date, start, duration, group_size, building, amenities) -> dict:
@@ -182,7 +204,9 @@ curl "http://localhost:8080/api/v1/rooms/available/JKB/tomorrow/14:00/120"
 curl "http://localhost:8080/api/v1/buildings"
 curl "http://localhost:8080/api/v1/rooms/HBLL:2214"</pre>
 <h2>Errors</h2>
-<p>Bad params return <code>400 {"detail": "..."}</code>. Rate limit is 120 req/min per IP (429).
+<p>Query strings whose <code>&amp;</code> separators arrive percent-encoded
+(<code>%26</code>, as some browsing assistants send them) are repaired automatically.
+Bad params return <code>400 {"detail": "..."}</code>. Rate limit is 120 req/min per IP (429).
 Responses cached ~5 minutes server-side. CORS open for GET.</p>
 <p>Upstream: BYU public class search (no auth, no credentials collected). Respect BYU IT
 appropriate-use policy; this service caches aggressively and never hammers upstream.</p>

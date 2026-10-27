@@ -106,3 +106,58 @@ def test_room_details_and_booking_link(db):
     assert d["requires_login"] is False
     with pytest.raises(availability.AvailabilityError):
         asyncio.run(availability.get_room_details("bogus"))
+
+
+# ── REST URL forms (pasted-prompt robustness) ────────────────────────────────
+
+def _client():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from backend import api_v1
+
+    api_v1._cache.clear()
+    api_v1._RATE.clear()
+    app = FastAPI()
+    app.include_router(api_v1.router)
+    return TestClient(app)
+
+
+_BASE = "/api/v1/rooms/available"
+
+
+def test_query_string_form(db):
+    r = _client().get(f"{_BASE}?date=2026-09-21&start=15:00&duration=60&building=HBLL")
+    assert r.status_code == 200
+    assert [x["id"] for x in r.json()["rooms"]] == ["HBLL:2215"]
+
+
+def test_percent_encoded_ampersands_are_repaired(db):
+    # Exact shape ChatGPT sent: & encoded as %26, plus a tracking param
+    r = _client().get(
+        f"{_BASE}?date=2026-09-21%26start=15:00%26duration=60%26building=HBLL"
+        "&utm_source=chatgpt.com"
+    )
+    assert r.status_code == 200
+    assert [x["id"] for x in r.json()["rooms"]] == ["HBLL:2215"]
+
+
+def test_html_escaped_ampersands_are_repaired(db):
+    r = _client().get(f"{_BASE}?date=2026-09-21&amp;start=15:00&amp;duration=60&amp;building=HBLL")
+    assert r.status_code == 200
+    assert [x["id"] for x in r.json()["rooms"]] == ["HBLL:2215"]
+
+
+def test_missing_start_is_a_400(db):
+    r = _client().get(f"{_BASE}?date=2026-09-21&building=HBLL")
+    assert r.status_code == 400
+    assert "start" in r.json()["detail"]
+
+
+def test_slash_form(db):
+    c = _client()
+    r = c.get(f"{_BASE}/HBLL/2026-09-21/15:00/60")
+    assert r.status_code == 200
+    assert [x["id"] for x in r.json()["rooms"]] == ["HBLL:2215"]
+    assert c.get(f"{_BASE}/all/today/15:00/60").status_code == 200
+    assert c.get(f"{_BASE}/hbll/tomorrow/15:00/60").status_code == 200
+    assert c.get(f"{_BASE}/HBLL/2026-09-21/3pm/60").status_code == 400
