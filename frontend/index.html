@@ -12,12 +12,16 @@
 <header>
   <h1><a href="/" class="home-link">FreeRoomFinder</a></h1>
   <span class="term-label" id="term-label">BYU</span>
-  <span class="header-break"></span>
-  <nav class="header-nav">
-    <a href="/" aria-current="page">Find rooms</a>
-    <a href="/ai">Use with AI</a>
-  </nav>
-  <a class="other-tools" href="https://willholland.dev" target="_blank" rel="noopener"><span class="long-label">Check out my other tools</span><span class="short-label">More tools</span> &rarr;</a>
+  <div class="header-actions">
+    <a class="header-btn header-btn-primary" href="/ai">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zm7 12l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg>
+      <span class="long-label">Link your AI agent</span><span class="short-label">Link your AI</span>
+    </a>
+    <a class="header-btn" href="https://willholland.dev" target="_blank" rel="noopener">
+      <span class="long-label">Check out my other tools</span><span class="short-label">My other tools</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+    </a>
+  </div>
   <button class="theme-toggle" id="btn-theme">&#9790; Dark</button>
 </header>
 

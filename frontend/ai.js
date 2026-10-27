@@ -1,11 +1,17 @@
-// "Use with AI" page: theme toggle, server-URL fill-in, copy buttons.
+// "Link your AI" page: theme toggle, server-URL fill-in, setup tabs, copy buttons.
 
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   document.getElementById("btn-theme").addEventListener("click", toggleTheme);
   fillBaseUrl();
-  document.querySelectorAll(".copy-btn").forEach((btn) => {
-    btn.addEventListener("click", () => copyFrom(btn));
+  initTabs();
+  document.querySelectorAll("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      copyText(document.getElementById(btn.dataset.copy).textContent, btn)
+    );
+  });
+  document.querySelectorAll("[data-copy-text]").forEach((btn) => {
+    btn.addEventListener("click", () => copyText(btn.dataset.copyText, btn));
   });
 });
 
@@ -36,9 +42,33 @@ function fillBaseUrl() {
   });
 }
 
+// ── Setup tabs ────────────────────────────────────────────
+function initTabs() {
+  const tabs = [...document.querySelectorAll('.ai-tabs [role="tab"]')];
+
+  function select(tab) {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("click", () => select(tab));
+    tab.addEventListener("keydown", (e) => {
+      const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      const next = tabs[(i + step + tabs.length) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+}
+
 // ── Copy to clipboard ─────────────────────────────────────
-async function copyFrom(btn) {
-  const text = document.getElementById(btn.dataset.copy).textContent;
+async function copyText(text, btn) {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
@@ -50,11 +80,13 @@ async function copyFrom(btn) {
     document.execCommand("copy");
     ta.remove();
   }
-  const label = btn.textContent;
-  btn.textContent = "Copied!";
+  // Example rows show their label in a child span; copy buttons use their own text
+  const label = btn.querySelector(".example-copy") || btn;
+  const original = label.textContent;
+  label.textContent = "Copied!";
   btn.classList.add("copied");
   setTimeout(() => {
-    btn.textContent = label;
+    label.textContent = original;
     btn.classList.remove("copied");
   }, 1500);
 }
