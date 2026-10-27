@@ -167,6 +167,11 @@ async def serve_index():
     return FileResponse("frontend/index.html")
 
 
+@app.get("/ai", response_class=FileResponse)
+async def serve_ai_page():
+    return FileResponse("frontend/ai.html")
+
+
 @app.get("/api/buildings")
 async def list_buildings() -> list[BuildingInfo]:
     stats = await get_cache_stats()

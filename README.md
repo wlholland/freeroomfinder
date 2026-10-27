@@ -40,8 +40,10 @@ The same data is also available as a [read-only JSON API](#public-api-v1-read-on
 ```
 freeroomfinder/
 ├── frontend/
-│   ├── index.html          # Single-page UI
-│   ├── app.js              # All frontend logic (search, SSE crawl progress, filters)
+│   ├── index.html          # Main search UI
+│   ├── app.js              # All search-page logic (search, SSE crawl progress, filters)
+│   ├── ai.html             # "Use with AI" page: MCP setup steps + copyable prompts
+│   ├── ai.js               # Theme toggle, URL fill-in, copy buttons for ai.html
 │   └── style.css           # Styles (dark mode, responsive)
 ├── backend/
 │   ├── main.py             # FastAPI app, web-UI routes, startup + semester watcher
@@ -159,7 +161,8 @@ Example: `20261` = Winter 2026.
 
 | Route | Used by | Purpose |
 |---|---|---|
-| `GET /` | browser | Serves the single-page UI |
+| `GET /` | browser | Serves the search UI |
+| `GET /ai` | browser | "Use with AI" page (MCP setup + copyable agent prompts) |
 | `GET /api/buildings` | web UI | All buildings with cached room counts |
 | `GET /api/rooms/{building}` | web UI | Cached rooms for a building |
 | `POST /api/search` | web UI | Free rooms for `{buildings, day, start_time, end_time}` |

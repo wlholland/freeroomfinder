@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Use with AI – FreeRoomFinder</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <h1><a href="/" class="home-link">FreeRoomFinder</a></h1>
+  <span class="term-label">BYU</span>
+  <span class="header-break"></span>
+  <nav class="header-nav">
+    <a href="/">Find rooms</a>
+    <a href="/ai" aria-current="page">Use with AI</a>
+  </nav>
+  <a class="other-tools" href="https://willholland.dev" target="_blank" rel="noopener"><span class="long-label">Check out my other tools</span><span class="short-label">More tools</span> &rarr;</a>
+  <button class="theme-toggle" id="btn-theme">&#9790; Dark</button>
+</header>
+
+<main class="ai-page">
+
+  <section class="ai-intro">
+    <h2>Ask your AI for an empty room</h2>
+    <p>FreeRoomFinder runs an <strong>MCP server</strong>, so Claude and other AI assistants can look up open BYU classrooms for you. Ask something like <em>"find me a quiet room in the library tomorrow at 3 for two hours"</em> and it checks the live class schedule. It's read-only and free, with no login or API key.</p>
+  </section>
+
+  <section class="card ai-card">
+    <h3><span class="step-num">1</span> Copy the server URL</h3>
+    <div class="copy-row">
+      <code class="copy-target" id="mcp-url" data-fill>__BASE__/mcp</code>
+      <button class="copy-btn" data-copy="mcp-url">Copy</button>
+    </div>
+  </section>
+
+  <section class="card ai-card">
+    <h3><span class="step-num">2</span> Add it to your assistant</h3>
+
+    <h4>Claude (claude.ai or the desktop app)</h4>
+    <ol>
+      <li>Open <strong>Settings → Connectors</strong> and choose <strong>Add custom connector</strong>.</li>
+      <li>Name it <strong>BYU Rooms</strong> and paste the URL above.</li>
+      <li>Start a new chat. Allow the connector the first time Claude asks.</li>
+    </ol>
+    <p class="muted-note">Custom connectors need a plan or workspace that allows them. If you don't see the option, use one of the other methods below.</p>
+
+    <h4>Claude Code</h4>
+    <div class="copy-block">
+      <pre><code id="cmd-claude-code" data-fill>claude mcp add --transport http byu-rooms __BASE__/mcp</code></pre>
+      <button class="copy-btn" data-copy="cmd-claude-code">Copy</button>
+    </div>
+
+    <h4>Other MCP clients</h4>
+    <p>Any client that supports remote MCP servers over Streamable HTTP will work, with no authentication. Many clients, like Cursor, use a config like this:</p>
+    <div class="copy-block">
+      <pre><code id="cfg-json" data-fill>{
+  "mcpServers": {
+    "byu-rooms": {
+      "url": "__BASE__/mcp"
+    }
+  }
+}</code></pre>
+      <button class="copy-btn" data-copy="cfg-json">Copy</button>
+    </div>
+  </section>
+
+  <section class="card ai-card">
+    <h3><span class="step-num">3</span> Ask away</h3>
+    <p>Paste this into a new chat and change the building, day, and time to what you need:</p>
+    <div class="copy-block prompt-block">
+      <pre><code id="prompt-mcp">Use the BYU Free Room Finder tools to find me an empty classroom in the Harold B. Lee Library (HBLL) tomorrow from 2:00 to 4:00 PM. List the rooms that are open the whole time first, then any that are only open for part of it.</code></pre>
+      <button class="copy-btn" data-copy="prompt-mcp">Copy prompt</button>
+    </div>
+  </section>
+
+  <section class="card ai-card">
+    <h3>No MCP? Paste this instead</h3>
+    <p>Agents that can make web requests (Claude Code, Cursor, and other coding agents) can use the public JSON API directly. Paste this prompt and fill in the last line:</p>
+    <div class="copy-block prompt-block">
+      <pre><code id="prompt-api" data-fill>I want to find an empty classroom at BYU. Use the FreeRoomFinder public API (read-only JSON, no login or API key):
+
+- GET __BASE__/api/v1/buildings
+  Building codes and names. Only buildings with has_cached_rooms=true return results.
+- GET __BASE__/api/v1/rooms/available?date=YYYY-MM-DD&amp;start=HH:MM&amp;duration=MINUTES&amp;building=CODE
+  date defaults to today, start is 24-hour time (required), duration is 15-960 minutes, building is optional.
+- GET __BASE__/api/v1/rooms/{BUILDING:room}?date=YYYY-MM-DD
+  One room's open windows for a day, e.g. HBLL:2214 (URL-encode the colon).
+
+All times are Mountain Time (America/Denver). A room counts as free when no class is scheduled there; it is a walk-in space, not a reservation. Full docs: __BASE__/api/v1/docs
+
+My request: [e.g. a quiet room in the library tomorrow from 2 to 4 pm]</code></pre>
+      <button class="copy-btn" data-copy="prompt-api">Copy prompt</button>
+    </div>
+  </section>
+
+  <section class="card ai-card ai-notes">
+    <h3>Good to know</h3>
+    <ul>
+      <li><strong>"Free" means no class is scheduled.</strong> Rooms aren't reserved for you and may be locked or used for other events.</li>
+      <li><strong>Only loaded buildings have results.</strong> The AI can see buildings someone has already searched on the <a href="/">main page</a>. If a building comes back empty, search it there once and ask again.</li>
+      <li><strong>Weekly schedule, not specific dates.</strong> A date is treated as its weekday, so holidays and finals aren't reflected. Sundays return nothing.</li>
+      <li><strong>Times are Mountain Time.</strong> Capacity and amenities aren't available from BYU, so the AI can't filter on them.</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="/static/ai.js"></script>
+</body>
+</html>
