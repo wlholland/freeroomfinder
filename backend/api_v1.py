@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -63,6 +64,11 @@ async def rooms_available(
     amenities: Optional[str] = Query(default=None, description="Comma-separated; any value matches nothing (no amenity data)"),
 ):
     _check_rate(request)
+    return await _available(date, start, duration, group_size, building, amenities)
+
+
+async def _available(date, start, duration, group_size, building, amenities) -> dict:
+    """Cached call into the shared core; used by both availability routes."""
     key = f"avail|{date}|{start}|{duration}|{group_size}|{building}|{amenities}"
     hit = _cache_get(key)
     if hit is not None:
@@ -80,6 +86,28 @@ async def rooms_available(
         raise _err(e)
     _cache_set(key, result)
     return result
+
+
+@router.get("/rooms/available/{building}/{date}/{start}/{duration}")
+async def rooms_available_path(
+    request: Request, building: str, date: str, start: str, duration: str
+):
+    """Same as /rooms/available, but with no query string.
+
+    Browsing assistants (e.g. ChatGPT) sometimes percent-encode the ``&``
+    separators in a query string, which collapses every param into ``date``.
+    Path segments survive that.  ``building`` may be ``all``; ``date`` may be
+    ``today`` or ``tomorrow`` (America/Denver).
+    """
+    _check_rate(request)
+    b = None if building.lower() == "all" else building
+    d = date.lower()
+    if d in ("today", "tomorrow"):
+        day = availability.parse_date(None)
+        if d == "tomorrow":
+            day += timedelta(days=1)
+        date = day.isoformat()
+    return await _available(date, start, duration, None, b, None)
 
 
 @router.get("/rooms/{room_id}")
@@ -142,12 +170,15 @@ capacity is usually <code>null</code>, <code>amenities</code> is always <code>[]
 All times ISO 8601 in <code>America/Denver</code>. Date defaults to today in Denver.</p>
 <h2>Endpoints</h2>
 <pre>GET /api/v1/rooms/available?date=YYYY-MM-DD&amp;start=HH:MM&amp;duration=60&amp;group_size=4&amp;building=HBLL&amp;amenities=whiteboard
+GET /api/v1/rooms/available/{building}/{date}/{start}/{duration}
+    (no query string; building may be "all", date may be "today"/"tomorrow")
 GET /api/v1/rooms/{id}              (id = BUILDING:room, URL-encoded)
 GET /api/v1/rooms/{id}/availability?date=YYYY-MM-DD
 GET /api/v1/buildings</pre>
 <h2>Examples</h2>
 <pre>curl "http://localhost:8080/api/v1/rooms/available?start=15:00&amp;duration=120&amp;building=HBLL"
 curl "http://localhost:8080/api/v1/rooms/available?date=2026-09-23&amp;start=09:00&amp;duration=60"
+curl "http://localhost:8080/api/v1/rooms/available/JKB/tomorrow/14:00/120"
 curl "http://localhost:8080/api/v1/buildings"
 curl "http://localhost:8080/api/v1/rooms/HBLL:2214"</pre>
 <h2>Errors</h2>

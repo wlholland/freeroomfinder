@@ -857,3 +857,4 @@ code.inline {
   .code-box pre { padding-right: 16px; padding-top: 52px; }
   .ai-facts { grid-template-columns: 1fr; }
 }
+.code-box + .ai-hint { margin-top: 12px; }

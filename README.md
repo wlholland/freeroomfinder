@@ -213,9 +213,16 @@ REST API and the MCP tools, so they always agree. Human docs page:
 ```bash
 curl "http://localhost:8080/api/v1/rooms/available?start=15:00&duration=120&building=HBLL"
 curl "http://localhost:8080/api/v1/rooms/available?date=2026-09-23&start=09:00&duration=60"
+curl "http://localhost:8080/api/v1/rooms/available/JKB/tomorrow/14:00/120"   # no query string
 curl "http://localhost:8080/api/v1/buildings"
 curl "http://localhost:8080/api/v1/rooms/HBLL:2214"   # id = BUILDING:room, URL-encoded
 ```
+
+- Slash-style form `GET /api/v1/rooms/available/{building}/{date}/{start}/{duration}`
+  is identical but has no query string, for browsing assistants (e.g. ChatGPT)
+  that percent-encode `&` and collapse every param into `date`. `building` may
+  be `all`; `date` may be `today` or `tomorrow` (America/Denver). The "No MCP"
+  prompt on `/ai` uses this form.
 
 - Params: `date` YYYY-MM-DD (default today, America/Denver) → mapped to its
   weekday; `start` HH:MM required; `duration` 15–960 min; `group_size` advisory

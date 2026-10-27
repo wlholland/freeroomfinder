@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Link your AI – FreeRoomFinder</title>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <link rel="stylesheet" href="/static/style.css?v=3">
+  <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body class="ai-body">
 
@@ -57,7 +57,7 @@
         <li><span>Paste the server URL and name it <strong>BYU Rooms</strong>.</span></li>
         <li><span>Start a new chat and ask for a room.</span></li>
       </ol>
-      <p class="ai-hint">Don't see Connectors? Your plan may not allow custom connectors. Try the No MCP tab instead.</p>
+      <p class="ai-hint">Don't see Connectors? Your plan may not allow custom connectors. Claude Code or the No MCP tab will still work.</p>
     </div>
 
     <div class="ai-panel" role="tabpanel" id="panel-code" aria-labelledby="tab-code" hidden>
@@ -83,22 +83,26 @@
     </div>
 
     <div class="ai-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api" hidden>
-      <p>Paste this into any AI agent that can make web requests. It explains the API, so there's nothing to install. Add what you're looking for on the last line.</p>
+      <p>Paste this into a coding agent that can make web requests, like <strong>Claude Code</strong> or <strong>Cursor</strong>. It explains the API, so there's nothing to install. Add what you're looking for on the last line.</p>
       <div class="code-box code-box-tall">
-        <pre><code id="prompt-api" data-fill>I want to find an empty classroom at BYU. Use the FreeRoomFinder public API (read-only JSON, no login or API key):
+        <pre><code id="prompt-api" data-fill>I want to find an empty classroom at BYU. Use the FreeRoomFinder public API (read-only JSON, no login or API key).
 
-- GET __BASE__/api/v1/buildings
-  Building codes and names. Only buildings with has_cached_rooms=true return results.
-- GET __BASE__/api/v1/rooms/available?date=YYYY-MM-DD&amp;start=HH:MM&amp;duration=MINUTES&amp;building=CODE
-  date defaults to today, start is 24-hour time (required), duration is 15-960 minutes, building is optional.
-- GET __BASE__/api/v1/rooms/{BUILDING:room}?date=YYYY-MM-DD
-  One room's open windows for a day, e.g. HBLL:2214 (URL-encode the colon).
+Find open rooms:
+GET __BASE__/api/v1/rooms/available/{BUILDING}/{DATE}/{START}/{MINUTES}
+- BUILDING: a building code like JKB or HBLL, or "all"
+- DATE: YYYY-MM-DD, "today", or "tomorrow"
+- START: 24-hour time, e.g. 14:00
+- MINUTES: 15 to 960
+Example: __BASE__/api/v1/rooms/available/JKB/tomorrow/14:00/120
 
-All times are Mountain Time (America/Denver). A room counts as free when no class is scheduled there; it is a walk-in space, not a reservation. Full docs: __BASE__/api/v1/docs
+Building codes: GET __BASE__/api/v1/buildings (only buildings with has_cached_rooms=true have results).
+
+Request the URL exactly as shown, with no extra parameters. All times are Mountain Time (America/Denver). A room counts as free when no class is scheduled there; it's a walk-in space, not a reservation. Full docs: __BASE__/api/v1/docs
 
 My request: </code></pre>
         <button class="copy-btn" data-copy="prompt-api">Copy prompt</button>
       </div>
+      <p class="ai-hint">Chat apps that browse the web, like ChatGPT, can be hit or miss with this. If yours supports connectors, use one of the other tabs instead.</p>
     </div>
   </section>
 
